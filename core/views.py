@@ -3,6 +3,11 @@ from django.shortcuts import render
 from rest_framework import viewsets, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly,
+                                        IsAdminUser, DjangoModelPermissions) 
+from rest_framework.authentication import TokenAuthentication
+
 from django_filters.rest_framework import DjangoFilterBackend
 
 
@@ -19,6 +24,9 @@ class CustomerViewSet(viewsets.ModelViewSet):
     search_fields = ('name', 'address', 'data_sheet__description')
     ordering_fields = ('id', 'name')
     ordering = ('id')
+    lookup_field = ('name')
+    
+    authentication_classes = [TokenAuthentication]
     
     def get_queryset(self):
         address = self.request.query_params.get('address', None)
@@ -41,6 +49,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         serializer = CustomerSerializer(obj)
         return Response(serializer.data)
     
+    """
     def create(self, request, *args, **kwargs):
         data = request.data
         customer = Customer.objects.create(
@@ -53,14 +62,13 @@ class CustomerViewSet(viewsets.ModelViewSet):
         
         serializer = CustomerSerializer(customer)
         return Response(serializer.data)
-    
+    """
     def update(self, request, *args, **kwargs):
         customer = self.get_object()
         data = request.data
         customer.name = data['name']
         customer.address = data['address']
         customer.data_sheet_id = data['data_sheet']           
-        print('prffffffff', data['profession'])
         profession = Profession.objects.get(id=data['profession'])
         
         for p in customer.professions.all():
@@ -125,11 +133,17 @@ class CustomerViewSet(viewsets.ModelViewSet):
 class ProfessionViewSet(viewsets.ModelViewSet):
     queryset = Profession.objects.all()
     serializer_class = ProfessionSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser,]
 
 class DataSheetViewSet(viewsets.ModelViewSet):
     queryset = DataSheet.objects.all()
     serializer_class = DataSheetSerializer
+    permission_classes = [AllowAny,]
+
 
 class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [DjangoModelPermissions,]
