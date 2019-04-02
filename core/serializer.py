@@ -29,6 +29,20 @@ class CustomerSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'name', 'address', 'professions', 'document_set', 
             'data_sheet', 'active', 'status_message', 'num_professions')
+
+    def create(self, validated_data):
+        professions = validated_data['professions']
+        del validated_data[professions]
+        
+        customer = Customer.objects.create(**validated_data)
+        
+        for profession in professions:
+            prof = Profession.objects.create(**profession)
+            customer.professions.add(prof)
+            
+        customer.save()
+        
+        return customer            
         
     def get_num_professions(self, obj):
         return obj.num_professions()
