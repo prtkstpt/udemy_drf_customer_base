@@ -7,7 +7,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ['udemy-customer-base.herokuapp.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'udemy-customer-base.herokuapp.com']
 
 
 # Application definition
