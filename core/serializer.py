@@ -18,11 +18,20 @@ class DocumentSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'dtype', 'doc_number', 'customer'
             )
+
+class DocumentSerializerCreate(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        fields = (
+            'id', 'dtype', 'doc_number', 'customer'
+            )
+        read_only_fields = ['customer']
+
 class CustomerSerializer(serializers.ModelSerializer):
     num_professions = serializers.SerializerMethodField()
-    data_sheet = DataSheetSerializer(read_only=True)
+    data_sheet = DataSheetSerializer()
     professions = ProfessionSerializer(many=True)
-    document_set = DocumentSerializer(many=True, read_only=True)
+    document_set = DocumentSerializerCreate(many=True)
     
     class Meta:
         model = Customer
@@ -32,9 +41,24 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         professions = validated_data['professions']
-        del validated_data[professions]
+        del validated_data['professions']
         
+        documents = validated_data['document_set']
+        del validated_data['document_set']
+        
+        data_sheet = validated_data['data_sheet']
+        del validated_data['data_sheet']
+
+        d_sheet = DataSheet.objects.create(**data_sheet)        
         customer = Customer.objects.create(**validated_data)
+        customer.data_sheet = d_sheet
+        
+        for doc in documents:
+            Document.objects.create(
+                dtype = doc['dtype'],
+                doc_number = doc['doc_number'],
+                customer_id =  customer.id
+            )
         
         for profession in professions:
             prof = Profession.objects.create(**profession)
